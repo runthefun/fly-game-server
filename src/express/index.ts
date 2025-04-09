@@ -102,8 +102,7 @@ export function initializeExpress(app: any) {
         if (!token) {
           userId = "anon";
         } else {
-          // verify token from cookie
-          const decodedToken = verify(token);
+          const decodedToken = await verify(token);
           const uid = decodedToken?.uid;
 
           if (uid?.toLowerCase() !== userId?.toLowerCase()) {
