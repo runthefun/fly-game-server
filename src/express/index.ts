@@ -154,7 +154,7 @@ export function initializeExpress(app: any) {
           } else {
             const roomOpts = {
               gameId: req.body.gameId,
-              userId: req.body.userId,
+              userId,
               username: req.body.username,
               roomType: type as string,
               gameData: null,
