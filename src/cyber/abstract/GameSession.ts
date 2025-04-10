@@ -702,7 +702,7 @@ export abstract class GameSession<
 
     let message = msg as any;
 
-    if (message.type === "broadcast") {
+    if (message.type === "broadcast" || message.type === "@awe/broadcast") {
       //
       const { exclude, ...data } = message;
 
@@ -723,20 +723,21 @@ export abstract class GameSession<
         },
         { except: exclude }
       );
-    } else if (message.type === "send") {
+    } else if (message.type === "@awe/relay") {
       //
+      const { target, ...data } = message;
       if (
-        message.playerId &&
-        typeof message.playerId === "string" &&
-        this.state.players.has(message.playerId)
+        target &&
+        typeof target === "string" &&
+        this.state.players.has(target)
       ) {
         this.ctx.sendMsg(
           CYBER_MSG,
           {
             type: Messages.ROOM_MESSAGE,
-            data: message.data,
+            data,
           },
-          message.playerId
+          target
         );
       }
     }
