@@ -1,5 +1,5 @@
 //const BASE_URL = "http://localhost:3001";
-const BASE_URL = "https://game-gen-git-segs-oncyber.vercel.app";
+const BASE_URL = "https://v3-oncyber.vercel.app";
 const GAME_API_URL = `${BASE_URL}/api/games/awe`;
 
 const AWE_BASE_URL = "https://oo-git-dev-oncyber.vercel.app";
