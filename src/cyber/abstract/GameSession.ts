@@ -12,8 +12,11 @@ import {
   PongMsg,
   PlayerStatePayload,
   RpcHandler,
+  NetStateEventPayload,
+  NetStateEventMsg,
+  NetStateSnapshotMsg,
 } from "./types";
-import { RoomState } from "../schema/RoomState";
+import { NetState, RoomState } from "../schema/RoomState";
 import { calcLatencyIPDTV } from "./utils";
 import { PlayerState } from "../schema/PlayerState";
 import type { SpaceProxy } from "../ServerSpace/thread/SpaceProxy";
@@ -568,6 +571,12 @@ export abstract class GameSession<
 
           this.spaceProxy?.onPlayerState(player.toJSON());
           //
+        } else if (msg.type === Messages.NET_STATE_EVENT) {
+          //
+          this.onNetStateEventMsg(msg, player);
+        } else if (msg.type === Messages.NET_STATE_SNAPSHOT) {
+          //
+          this.onNetStateSnapshotMsg(msg, player);
         } else if (msg.type == Messages.GAME_MESSAGE) {
           //
           this.onMessage(msg.data, player);
@@ -665,12 +674,38 @@ export abstract class GameSession<
     });
   }
 
+  onNetStateEventMsg(msg: NetStateEventMsg, player: PlayerData) {
+    //
+    // console.log("onNetStateEventMsg", msg);
+    let netState = this.state.netStates.get(msg.id);
+
+    if (netState == null) {
+      netState = new NetState();
+      netState.id = msg.id;
+      this.state.netStates.set(msg.id, netState);
+    }
+
+    netState.addEvents(msg.events, player.sessionId);
+  }
+
+  onNetStateSnapshotMsg(msg: NetStateSnapshotMsg, player: PlayerData) {
+    //
+    // console.log("onNetStateSnapshotMsg", msg);
+    let netState = this.state.netStates.get(msg.id);
+    if (netState == null) {
+      netState = new NetState();
+      netState.id = msg.id;
+      this.state.netStates.set(msg.id, netState);
+    }
+    netState.applySnapshot(msg.snapshot);
+  }
+
   onMessage(msg: ClientMsg, player: PlayerData) {
     //
 
     let message = msg as any;
 
-    if (message.type === "broadcast") {
+    if (message.type === "broadcast" || message.type === "@awe/broadcast") {
       //
       const { exclude, ...data } = message;
 
@@ -705,6 +740,23 @@ export abstract class GameSession<
             data: message.data,
           },
           message.playerId
+        );
+      }
+    } else if (message.type === "@awe/relay") {
+      //
+      const { target, ...data } = message;
+      if (
+        target &&
+        typeof target === "string" &&
+        this.state.players.has(target)
+      ) {
+        this.ctx.sendMsg(
+          CYBER_MSG,
+          {
+            type: Messages.ROOM_MESSAGE,
+            data,
+          },
+          target
         );
       }
     }

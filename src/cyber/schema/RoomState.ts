@@ -1,7 +1,8 @@
-import { Schema, type, MapSchema } from "@colyseus/schema";
+import { Schema, type, MapSchema, ArraySchema } from "@colyseus/schema";
 import { PlayerState } from "./PlayerState";
 import { GameTimer } from "./GameTimer";
 import { EntityState, ExtSchema, register } from "./register";
+import { NetStateEventPayload } from "../abstract/types";
 
 export class ExtensibleSchema extends Schema {
   //
@@ -101,6 +102,58 @@ export class Stats extends Schema {
   }
 }
 
+export class NetStateEvent extends Schema {
+  @type("string") id = "";
+  @type("string") sender = "";
+  @type("string") data = "";
+  @type("number") timestamp = 0;
+}
+
+export class NetStateSnapshot extends Schema {
+  @type("string") lastAppliedEventId = "";
+  @type("string") state = "null";
+}
+
+export class NetState extends Schema {
+  @type("number") version = -1;
+  @type("string") id = "";
+  @type(NetStateSnapshot) snapshot = new NetStateSnapshot();
+  @type({ array: NetStateEvent }) events = new ArraySchema<NetStateEvent>();
+
+  addEvents(events: NetStateEventPayload[], sender: string) {
+    //
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
+      const newEvent = new NetStateEvent();
+      newEvent.id = event.id;
+      newEvent.sender = sender;
+      newEvent.data = event.data;
+      newEvent.timestamp = Date.now();
+
+      this.events.push(newEvent);
+    }
+    this.version++;
+  }
+
+  applySnapshot(snapshot: { state: string; lastAppliedEventId: string }) {
+    //
+    const lastAppliedEventIndex = this.events.findIndex(
+      (event) => event.id === snapshot.lastAppliedEventId
+    );
+    if (lastAppliedEventIndex < 0) {
+      console.error(
+        `lastAppliedEventId ${snapshot.lastAppliedEventId} not found in events`
+      );
+      return;
+    }
+
+    this.snapshot.state = snapshot.state;
+    this.snapshot.lastAppliedEventId = snapshot.lastAppliedEventId;
+    // purge past events
+    this.events.splice(0, lastAppliedEventIndex + 1);
+  }
+}
+
 export class RoomState extends ExtensibleSchema {
   //
   @type("string") snapshotId: string = null;
@@ -108,6 +161,7 @@ export class RoomState extends ExtensibleSchema {
   @type(Stats) stats = new Stats();
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type(RoomSettings) settings = new RoomSettings();
+  @type({ map: NetState }) netStates = new MapSchema<NetState>();
 
   addPlayer(data: any) {
     //

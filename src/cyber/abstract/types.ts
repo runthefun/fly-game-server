@@ -51,6 +51,8 @@ export enum Messages {
   PLAYER_STATE = 1301,
   BROADCAST = 1302,
   SEND_DM = 1303,
+  NET_STATE_EVENT = 1304,
+  NET_STATE_SNAPSHOT = 1305,
 
   // ping
   PING = 1001,
@@ -118,6 +120,26 @@ export interface PlayerStateMsg {
   ];
 }
 
+export interface NetStateEventPayload {
+  id: string;
+  data: string;
+}
+
+export interface NetStateEventMsg {
+  type: Messages.NET_STATE_EVENT;
+  id: string; // netstate id
+  events: NetStateEventPayload[];
+}
+
+export interface NetStateSnapshotMsg {
+  type: Messages.NET_STATE_SNAPSHOT;
+  id: string; // netstate id
+  snapshot: {
+    state: string;
+    lastAppliedEventId: string;
+  };
+}
+
 export interface BroadcastMsg {
   type: Messages.BROADCAST;
   data: any;
@@ -142,7 +164,9 @@ export type ClientMessage<M> =
   | BroadcastMsg
   | SendDMMsg
   | PongMsg
-  | RpcMsg;
+  | RpcMsg
+  | NetStateEventMsg
+  | NetStateSnapshotMsg;
 
 export interface BaseRoomState extends Schema {
   snapshotId: string;
