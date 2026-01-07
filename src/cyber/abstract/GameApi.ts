@@ -2,7 +2,7 @@
 const BASE_URL = "https://v3-oncyber.vercel.app";
 const GAME_API_URL = `${BASE_URL}/api/games/awe`;
 
-const AWE_BASE_URL = "https://oo-git-dev-oncyber.vercel.app";
+const AWE_BASE_URL = "https://oo.gg";
 const AWE_GAME_API_URL = `${AWE_BASE_URL}/api/games`;
 
 const GAME_SERVER_KEY = process.env.GAME_SERVER_KEY;
